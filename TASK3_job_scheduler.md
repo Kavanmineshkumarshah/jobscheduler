@@ -45,7 +45,7 @@ python scheduler.py jobs.txt --workers 2
 
 ## The jobs file
 
-One job per line:
+One job per line:                                                                
 ```
 job <name> time=<minutes> needs=<job1>,<job2> retries=<number> fails=<number>
 ```

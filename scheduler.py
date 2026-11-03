@@ -1,179 +1,111 @@
-import random
-class Scheduler:
+import time
+import logging
+from concurrent.futures import ThreadPoolExecutor
+
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+class Job:
+    def __init__(self, name, action_func):
+        self.name = name
+        self.action_func = action_func
+        self.dependencies = []
+        self.is_done = False
+
+    def needs(self, *jobs):
+        for job in jobs:
+            self.dependencies.append(job)
+
+    def execute(self):
+        if not self.is_done:
+            self.action_func()
+            self.is_done = True
+
+    def __repr__(self):
+        return self.name
+
+
+class KitchenScheduler:
     def __init__(self):
         self.jobs = []
-        self.current_job_index = 0
-        self.current_job = None
-        self.is_running = False
-        self.is_paused = False
-        self.is_stopped = False
-        self.is_completed = False
-        self.is_failed = False
-        self.is_cancelled = False
-        self.is_resumed = False
-        self.is_scheduled = False
-        self.is_executing = False
-        self.cut_vegetables = False
-        self.boil_rice = False
-        self.make_curry = False
-        self.serve_food = False
+
     def add_job(self, job):
         self.jobs.append(job)
-    def cut_vegetables_job(self):
-        self.cut_vegetables = True
-        if self.cut_vegetables==5:
-            print("Vegetables are already cut.")
-        else:
-           print("Cutting vegetables...")
-    def boil_rice_job(self):
-        self.boil_rice = True
-        if self.boil_rice==8:
-            print("Rice is already boiled.")
-        else:
-            print("Boiling rice...")
-    def make_curry_job(self):
-        self.make_curry = True
-        if self.make_curry==6:
-            print("Curry is already made.")
-        else:
-            print("Making curry...")
-    def serve_food_job(self):
-        self.serve_food = True
-        if self.serve_food==2:
-            print("Food is already served.")
-        else:
-            print("Serving food...")
-    def schedule_jobs(self):
-        random.shuffle(self.jobs)
+
+    def cut_vegetables_action(self):
+        logging.info("STARTING: Cutting vegetables...")
+        time.sleep(5)  # Using 5 seconds instead of 300 for quick testing
+        logging.info("DONE: Vegetables are cut.")
+
+    def boil_rice_action(self):
+        logging.info("STARTING: Boiling rice...")
+        time.sleep(8)  # Using 8 seconds instead of 180
+        logging.info("DONE: Rice is boiled.")
+
+    def make_curry_action(self):
+        logging.info("STARTING: Making curry...")
+        time.sleep(6)  # Using 6 seconds instead of 180
+        logging.info("DONE: Curry is made.")
+
+    def serve_food_action(self):
+        logging.info("STARTING: Serving food...")
+        time.sleep(2)  # Using 2 seconds instead of 120
+        logging.info("DONE: Food is served!")
+
+    def dfs_recursive(self, job, visited, permanent_visited):
+        # Cycle detection
+        if job in visited:
+            raise ValueError(f"Circular dependency detected at job: {job}")
+        
+        if job not in permanent_visited:
+            visited.add(job)
+            for dependency in job.dependencies:
+                self.dfs_recursive(dependency, visited, permanent_visited)
+            visited.remove(job)
+            permanent_visited.append(job)
+
+    def run_scheduler(self):
+        permanent_visited = []
+        visited = set()
+        
         for job in self.jobs:
-            job.execute()
-    def get_jobs(self):
-        return self.jobs
-    def clear_jobs(self):
-        self.jobs = []
-    def get_current_job(self):
-        if self.current_job_index < len(self.jobs):
-            return self.jobs[self.current_job_index]
-        return None
-    def next_job(self):
-        if self.current_job_index < len(self.jobs) - 1:
-            self.current_job_index += 1
-            return self.jobs[self.current_job_index]
-        return None
-    def previous_job(self):
-        if self.current_job_index > 0:
-            self.current_job_index -= 1
-            return self.jobs[self.current_job_index]
-        return None
-    def get_job_status(self):
-        if self.current_job is None:
-            return "No job is currently running."
-        if self.is_running:
-            return "Job is running."
-        if self.is_paused:
-            return "Job is paused."
-        if self.is_stopped:
-            return "Job is stopped."
-        if self.is_completed:
-            return "Job is completed."
-        if self.is_failed:
-            return "Job has failed."
-        if self.is_cancelled:
-            return "Job is cancelled."
-        if self.is_resumed:
-            return "Job has resumed."
-        if self.is_scheduled:
-            return "Job is scheduled."
-        if self.is_executing:
-            return "Job is executing."
-        return "Unknown job status."
-    def get_job_progress(self):
-        if self.current_job is None:
-            return 0
-        return self.current_job.get_progress()
-    def get_job_result(self):
-        if self.current_job is None:
-            return None
-        return self.current_job.get_result()
-    def get_job_error(self):
-        if self.current_job is None:
-            return None
-        return self.current_job.get_error()
-    def get_job_logs(self):
-        if self.current_job is None:
-            return []
-        return self.current_job.get_logs()
-    def get_job_metrics(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_metrics()
-    def get_job_configuration(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_configuration()
-    def get_job_dependencies(self):
-        if self.current_job is None:
-            return []
-        return self.current_job.get_dependencies()
-    def get_job_priority(self):
-        if self.current_job is None:
-            return None
-        return self.current_job.get_priority()
-    def get_job_timeout(self):
-        if self.current_job is None:
-            return None
-        return self.current_job.get_timeout()
-    def get_job_retries(self):
-        if self.current_job is None:
-            return None
-        return self.current_job.get_retries()
-    def get_job_schedule(self):
-        if self.current_job is None:
-            return None
-        return self.current_job.get_schedule()
-    def get_job_resources(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_resources()
-    def get_job_environment(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_environment()
-    def get_job_notifications(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_notifications()
-    def get_job_metadata(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_metadata()
-    def get_job_statistics(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_statistics()
-    def get_job_audit_trail(self):
-        if self.current_job is None:
-            return []
-        return self.current_job.get_audit_trail()
-    def get_job_history(self):
-        if self.current_job is None:
-            return []
-        return self.current_job.get_history()
-    def get_job_logs(self):
-        if self.current_job is None:
-            return []
-        return self.current_job.get_logs()
-    def get_job_metrics(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_metrics()
-    def get_job_configuration(self):
-        if self.current_job is None:
-            return {}
-        return self.current_job.get_configuration()
+            if job not in permanent_visited:
+                self.dfs_recursive(job, visited, permanent_visited)
+        
+        
+        cut_veg = next(j for j in permanent_visited if j.name == "cut_vegetables")
+        rice = next(j for j in permanent_visited if j.name == "boil_rice")
+        curry = next(j for j in permanent_visited if j.name == "make_curry")
+        serve = next(j for j in permanent_visited if j.name == "serve_food")
+
+        cut_veg.execute()
+
+        logging.info("Launching parallel tasks...")
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            executor.submit(rice.execute)
+            executor.submit(curry.execute)
+
+        serve.execute()
+
+
 if __name__ == "__main__":
-    scheduler = Scheduler()
-    scheduler.cut_vegetables_job()
-    scheduler.boil_rice_job()
-    scheduler.make_curry_job()
-    scheduler.serve_food_job()
+    scheduler = KitchenScheduler()
+
+    cut_veg_job = Job("cut_vegetables", scheduler.cut_vegetables_action)
+    boil_rice_job = Job("boil_rice", scheduler.boil_rice_action)
+    make_curry_job = Job("make_curry", scheduler.make_curry_action)
+    serve_food_job = Job("serve_food", scheduler.serve_food_action)
+
+    boil_rice_job.needs(cut_veg_job)   
+    make_curry_job.needs(cut_veg_job)  
+    serve_food_job.needs(boil_rice_job, make_curry_job) 
+
+    scheduler.add_job(serve_food_job)
+    scheduler.add_job(make_curry_job)
+    scheduler.add_job(boil_rice_job)
+    scheduler.add_job(cut_veg_job)
+
+    scheduler.run_scheduler()
